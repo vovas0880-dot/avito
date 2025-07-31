@@ -17,10 +17,9 @@ import html
 import base64
 import json
 import aiohttp
-import random
 from avito_anti429_ultra import patch_watcher_ultra, extend_app_ultra
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Deque, Callable, cast, Any, Set
+from typing import Dict, List, Optional, Deque, Callable, cast, Any, Set, Tuple
 from collections import deque
 from datetime import datetime, timedelta, timezone
 from urllib.parse import urlparse, urlunparse, parse_qs, parse_qsl, urlencode, unquote
@@ -28,7 +27,7 @@ import uuid
 import logging
 
 from aiogram import Bot, Dispatcher, F, Router, types
-from telegram_utils import sanitize_newlines, safe_send_message, safe_send_photo
+from telegram_utils import sanitize_newlines, safe_send_message
 from aiogram.enums import ParseMode
 from aiogram.client.default import DefaultBotProperties
 from aiogram.filters import Command, StateFilter
@@ -111,7 +110,7 @@ KEY_RE = re.compile(
 
 # ===== helpers =====
 def _tz():
-    if ZoneInfo:
+    if ZoneInfo is not None:
         try:
             return ZoneInfo(DISPLAY_TZ_NAME)
         except Exception:
@@ -388,8 +387,8 @@ class Watcher:
         self.on_deliver = on_deliver
         self.last_success = None             # Время последнего успешного запроса (200)
         self.last_429_start = None           # Время начала бана (429)
-        self._429_intervals = []             # [(start, end, duration), ...] — когда был бан
-        self._ok_intervals = []              # [(start, end, duration), ...] — когда не было бана
+        self._429_intervals: List[Tuple[float, float, float]] = []  # [(start, end, duration)]
+        self._ok_intervals: List[Tuple[float, float, float]] = []   # [(start, end, duration)]
         self._interval = float(POLL_PERIOD_SEC)  # Твой стандартный интервал
         patch_watcher_ultra(Watcher)
 
@@ -2088,7 +2087,8 @@ class App:
             lines = ["Ваши подписки:"]
             for s in subs:
                 desc = []
-                if s.name: desc.append(f"name={s.name}")
+                if s.name:
+                    desc.append(f"name={s.name}")
                 if s.flt.keywords_all:
                     desc.append(f"kw={','.join(s.flt.keywords_all)}")
                 if s.flt.keywords_stop:
@@ -2184,7 +2184,8 @@ class App:
                         "Антидубликат очищен полностью (per-user и global)."))
                 return
             if target == "global":
-                if "_global" in data: del data["_global"]
+                if "_global" in data:
+                    del data["_global"]
                 self._save_sent(data)
                 await m.reply(
                     _sanitize_newlines("Глобальный антидубликат очищен."))

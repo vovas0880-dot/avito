@@ -44,16 +44,16 @@ import time
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Dict, Any, Optional, List
 
 from aiogram import Bot, Dispatcher, F, Router, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import Command
 from aiogram.types import BufferedInputFile
+import aiohttp
 # ---------- логирование ----------
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-from telegram_utils import sanitize_newlines, safe_answer
 logger = logging.getLogger("alert_ultra")
 
 # ---------- env ----------
@@ -234,16 +234,18 @@ class BindingStore:
 
     def stat(self) -> Dict[str, Any]:
         paths = self._paths_to_try()
-        info = {"paths": paths, "exists": {}, "size": {}, "mtime": {}}
+        exists: Dict[str, bool] = {}
+        size: Dict[str, int] = {}
+        mtime: Dict[str, int] = {}
         for p in paths:
             try:
                 st = os.stat(p)
-                info["exists"][p] = True
-                info["size"][p] = st.st_size
-                info["mtime"][p] = int(st.st_mtime)
+                exists[p] = True
+                size[p] = st.st_size
+                mtime[p] = int(st.st_mtime)
             except FileNotFoundError:
-                info["exists"][p] = False
-        return info
+                exists[p] = False
+        return {"paths": paths, "exists": exists, "size": size, "mtime": mtime}
 
 # --------- инициализация стора ----------
 alt_paths = [p.strip() for p in BINDINGS_ALT_PATHS.split(";") if p.strip()]
@@ -386,7 +388,8 @@ async def bindings_cmd(m: types.Message):
         parts = (m.text or "").split()
         page = int(parts[1]) if len(parts) >= 2 and parts[1].isdigit() else 1
         per_page = int(parts[2]) if len(parts) >= 3 and parts[2].isdigit() else 50
-        page = max(1, page); per_page = max(1, min(200, per_page))
+        page = max(1, page)
+        per_page = max(1, min(200, per_page))
         start = (page - 1) * per_page
         chunk = items[start:start+per_page]
         lines = [f"<b>Привязки</b> (page {page}, per {per_page}, total {len(items)})"]
@@ -429,7 +432,8 @@ async def rebind_cmd(m: types.Message):
         if len(parts) < 3 or (not parts[1].lstrip("-").isdigit()) or (not parts[2].lstrip("-").isdigit()):
             await m.reply("Формат: /rebind <main_user_id> <chat_id>")
             return
-        uid = int(parts[1]); chat_id = int(parts[2])
+        uid = int(parts[1])
+        chat_id = int(parts[2])
         data = await STORE.update_binding(uid, chat_id)
         await m.reply(f"Готово. Всего привязок: {len(data)}")
     except Exception as e:
@@ -448,8 +452,6 @@ async def export_cmd(m: types.Message):
     except Exception as e:
         logger.exception("export_cmd error: %s", e)
         await m.reply("Ошибка экспорта")
-
-import aiohttp
 
 @router.message(Command("import_bindings"))
 async def import_cmd(m: types.Message, bot: Bot):

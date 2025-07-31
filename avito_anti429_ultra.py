@@ -375,8 +375,8 @@ class UltraBanBrain:
         self.last_429_start: Optional[float] = None
         # EWMA параметры
         self.alpha = 0.3
-        self.ewma_ok = None  # сред. «жизнь без бана»
-        self.ewma_ban = None  # сред. длительность бана
+        self.ewma_ok: Optional[float] = None  # сред. «жизнь без бана»
+        self.ewma_ban: Optional[float] = None  # сред. длительность бана
         # профили по часу суток
         self.ok_by_hour = [0.0] * 24
         self.ok_cnt_hour = [0] * 24
@@ -595,10 +595,10 @@ def patch_watcher_ultra(WatcherCls):
         # Сессия/прокси
         sess_info = await self.proxy.get()
         if sess_info:
-            session, proxy_for_req, is_socks, proxy_key = sess_info
+            session, proxy_for_req, _, proxy_key = sess_info
         else:
             session = await self._ensure_session()
-            proxy_for_req, is_socks, proxy_key = None, False, None
+            proxy_for_req, _, proxy_key = None, False, None
             if session is None:
                 # попытка через запасной конструктор
                 session = await _ensure_session_fallback(self)

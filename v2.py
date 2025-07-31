@@ -28,7 +28,7 @@ from aiogram.filters import Command
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
-from telegram_utils import sanitize_newlines, safe_send_message, safe_send_photo
+from telegram_utils import safe_send_message, safe_send_photo
 
 from dotenv import load_dotenv  # type: ignore[reportMissingImports]
 
@@ -761,8 +761,6 @@ async def cb_close_menu(cq: types.CallbackQuery):
     await cq.answer()
 
 
-from aiogram import types
-
 @searches_router.callback_query(F.data.startswith("open_sub:"))
 async def cb_open_sub(cq: types.CallbackQuery, state: FSMContext):
     # 1) Сужаем тип cq.data до str, чтобы .split() точно было доступно
@@ -994,11 +992,15 @@ class App:
                         kws = token[3:].replace(";", ",").replace("|", ",")
                         flt.keywords_all = [w for w in kws.split(",") if w]
                     elif token.startswith("min="):
-                        try: flt.price_min = int(token[4:])
-                        except Exception: pass
+                        try:
+                            flt.price_min = int(token[4:])
+                        except Exception:
+                            pass
                     elif token.startswith("max="):
-                        try: flt.price_max = int(token[4:])
-                        except Exception: pass
+                        try:
+                            flt.price_max = int(token[4:])
+                        except Exception:
+                            pass
             if flt.price_max is None:
                 await m.reply("⚠️ Укажите максимальную цену (параметр <code>max=</code>) или воспользуйтесь мастером «/newsearch».")
                 return
@@ -1017,10 +1019,14 @@ class App:
             lines = ["Ваши подписки:"]
             for s in subs:
                 desc = []
-                if s.name: desc.append(f"name={s.name}")
-                if s.flt.keywords_all: desc.append(f"kw={','.join(s.flt.keywords_all)}")
-                if s.flt.price_min is not None: desc.append(f"min={s.flt.price_min}")
-                if s.flt.price_max is not None: desc.append(f"max={s.flt.price_max}")
+                if s.name:
+                    desc.append(f"name={s.name}")
+                if s.flt.keywords_all:
+                    desc.append(f"kw={','.join(s.flt.keywords_all)}")
+                if s.flt.price_min is not None:
+                    desc.append(f"min={s.flt.price_min}")
+                if s.flt.price_max is not None:
+                    desc.append(f"max={s.flt.price_max}")
                 lines.append(f"{s.id}: {s.url} " + (f"({'; '.join(desc)})" if desc else ""))
             lines.append("\nПодсказка: /feed — последние присланные карточки.")
             await m.reply("\n".join(lines), disable_web_page_preview=True)
