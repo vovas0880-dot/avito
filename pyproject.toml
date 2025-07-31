@@ -1,0 +1,19 @@
+[project]
+name = "python-template"
+version = "0.1.0"
+description = ""
+authors = ["Your Name <you@example.com>"]
+requires-python = ">=3.11"
+dependencies = [
+    "aiogram==3.7.0",
+    "flask>=3.1.1",
+    "requests>=2.32.4",
+]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
