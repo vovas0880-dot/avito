@@ -1,0 +1,41 @@
+entrypoint = "main.py"
+modules = ["python-3.11"]
+
+[nix]
+channel = "stable-25_05"
+packages = ["mailutils"]
+
+[unitTest]
+language = "python3"
+
+[gitHubImport]
+requiredFiles = [".replit", "replit.nix"]
+
+[deployment]
+run = "python avito_monitor_bot.py"
+deploymentTarget = "cloudrun"
+
+[[ports]]
+localPort = 8080
+externalPort = 80
+
+[workflows]
+runButton = "Run Avito Monitor Bot"
+
+[[workflows.workflow]]
+name = "Run Avito Monitor Bot"
+author = 45692858
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python avito_monitor_bot.py"
+
+[[workflows.workflow]]
+name = "Run Alert Bot"
+author = 45692858
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "python alert_bot.py"
